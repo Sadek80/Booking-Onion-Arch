@@ -1,0 +1,46 @@
+version: '3.4'
+
+services:
+  booking.api:
+    image: ${DOCKER_REGISTRY-}bookingapi
+    build:
+      context: .
+      dockerfile: Booking.API/Dockerfile
+    depends_on:
+      - booking-db
+
+  booking-db:
+    image: postgres:latest
+    container_name: Booking.Db
+    restart: always
+    environment:
+      - POSTGRES_DB=Bookingdb
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - ./.containers/database:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+  booking.seq:
+    image: datalust/seq:latest
+    container_name: Booking-seq
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - 5342:5342
+      - 8081:80
+  
+  booking-idp:
+    image: jboss/keycloak:latest
+    container_name: Booking.Identity
+    environment:
+      - KEYCLOAK_USER=admin
+      - KEYCLOAK_PASSWORD=admin
+      - KEYCLOAK_IMPORT=/tmp/Booking-realm-export.json
+    volumes:
+      - ./.containers/identity:/opt/jboss/keycloak/standalone/data
+      - ./.files/Booking-realm-export.json:/tmp/Booking-realm-export.json
+    ports:
+      - 18080:8080
+
